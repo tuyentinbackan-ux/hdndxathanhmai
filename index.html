@@ -1,0 +1,261 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hệ Thống Biểu Quyết HĐND Xã Thanh Mai</title>
+    <!-- Nhúng Tailwind CSS để thiết kế giao diện -->
+    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+    <!-- Nhúng thư viện Chart.js để vẽ biểu đồ -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body class="bg-slate-100 text-gray-800 font-sans min-h-screen flex flex-col justify-between">
+
+    <div class="container mx-auto px-4 py-6 max-w-5xl flex-grow">
+        <!-- Tiêu đề Đại Hội -->
+        <header class="text-center mb-8 border-b border-gray-300 pb-4">
+            <h1 class="text-2xl font-bold text-red-700 uppercase tracking-wide">HỘI ĐỒNG NHÂN DÂN XÃ THANH MAI</h1>
+            <p class="text-lg font-semibold text-blue-900 mt-1">Hệ Thống Biểu Quyết Điện Tử Kỳ Họp HĐND</p>
+        </header>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+            
+            <!-- CỘT TRÁI: GIAO DIỆN CỦA ĐẠI BIỂU (Đăng nhập / Biểu quyết) -->
+            <div class="bg-white p-6 rounded-xl shadow-md border border-gray-200">
+                
+                <!-- PHẦN 1: GIAO DIỆN ĐĂNG NHẬP -->
+                <div id="login-box" class="block">
+                    <h2 class="text-xl font-bold mb-4 text-gray-700 border-b pb-2 text-center">Đại Biểu Đăng Nhập</h2>
+                    <div class="bg-blue-50 text-blue-800 text-xs p-3 rounded-lg mb-4 leading-relaxed">
+                        📌 <strong>Danh sách mã thử nghiệm (12 Đại biểu):</strong><br>
+                        Nhập từ mã <code class="bg-white px-1 font-bold">DB01</code> đến <code class="bg-white px-1 font-bold">DB12</code> (Ví dụ: DB01, DB02, DB12,...)
+                    </div>
+                    <div class="space-y-4">
+                        <div>
+                            <label class="block text-sm font-semibold text-gray-600 mb-1">Mã số thẻ đại biểu</label>
+                            <input type="text" id="voter-id" placeholder="Nhập mã (Ví dụ: DB01)" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none uppercase font-bold text-lg text-center tracking-widest">
+                        </div>
+                        <button onclick="handleLogin()" class="w-full bg-blue-700 hover:bg-blue-800 text-white font-bold py-3 px-4 rounded-lg transition shadow-md">
+                            Xác nhận đăng nhập
+                        </button>
+                        <p id="login-error" class="text-red-500 text-sm text-center hidden font-medium">⚠️ Mã đại biểu không đúng hoặc đã bỏ phiếu!</p>
+                    </div>
+                </div>
+
+                <!-- PHẦN 2: GIAO DIỆN BIỂU QUYẾT -->
+                <div id="voting-box" class="hidden">
+                    <div class="flex justify-between items-center bg-gray-50 p-3 rounded-lg border border-gray-200 mb-6">
+                        <div>
+                            <p class="text-xs text-gray-500">Đại biểu đang đăng nhập:</p>
+                            <p id="voter-name" class="font-bold text-gray-800 text-base text-blue-800">Chưa rõ</p>
+                        </div>
+                        <button onclick="handleLogout()" class="text-xs text-red-600 hover:underline font-semibold">Đăng xuất</button>
+                    </div>
+
+                    <h3 class="text-md font-bold text-gray-700 mb-4">Xin mời Đại biểu cho ý kiến biểu quyết về nội dung Tờ trình:</h3>
+                    
+                    <div class="space-y-3">
+                        <button onclick="castVote(0)" class="vote-btn w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-4 px-6 rounded-lg shadow transition transform active:scale-98 flex justify-between items-center text-base">
+                            <span>👍 TÁN THÀNH</span>
+                        </button>
+                        <button onclick="castVote(1)" class="vote-btn w-full bg-rose-600 hover:bg-rose-700 text-white font-bold py-4 px-6 rounded-lg shadow transition transform active:scale-98 flex justify-between items-center text-base">
+                            <span>👎 KHÔNG TÁN THÀNH</span>
+                        </button>
+                        <button onclick="castVote(2)" class="vote-btn w-full bg-amber-500 hover:bg-amber-600 text-white font-bold py-4 px-6 rounded-lg shadow transition transform active:scale-98 flex justify-between items-center text-base">
+                            <span>🤔 Ý KIẾN KHÁC</span>
+                        </button>
+                    </div>
+
+                    <!-- Thông báo sau khi đã biểu quyết xong -->
+                    <div id="voted-alert" class="hidden mt-6 p-4 bg-emerald-50 border border-emerald-300 text-emerald-800 rounded-lg text-center font-semibold">
+                        🎉 Hệ thống đã ghi nhận phiếu biểu quyết thành công của Đại biểu!
+                    </div>
+                </div>
+
+            </div>
+
+            <!-- CỘT PHẢI: KẾT QUẢ & BIỂU ĐỒ (Màn hình trung tâm) -->
+            <div class="bg-white p-6 rounded-xl shadow-md border border-gray-200 flex flex-col justify-between">
+                <div>
+                    <div class="flex justify-between items-center border-b pb-2 mb-4">
+                        <h2 class="text-lg font-bold text-gray-700">Kết quả kiểm phiếu hiện tại</h2>
+                        <span class="bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded font-semibold">Tổng: 12 Đại biểu</span>
+                    </div>
+                    
+                    <table class="min-w-full divide-y divide-gray-200 text-center text-sm mb-6">
+                        <thead class="bg-gray-50 font-bold text-gray-600">
+                            <tr>
+                                <th class="px-4 py-3 text-left">Phương án</th>
+                                <th class="px-4 py-3">Số phiếu</th>
+                                <th class="px-4 py-3">Tỷ lệ</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-gray-200 font-medium text-gray-700">
+                            <tr class="bg-emerald-50/20">
+                                <td class="px-4 py-3 text-left text-emerald-700 font-bold">Tán thành</td>
+                                <td id="count-0" class="px-4 py-3 text-lg font-bold">0</td>
+                                <td id="percent-0" class="px-4 py-3 text-emerald-700 font-bold">0%</td>
+                            </tr>
+                            <tr class="bg-rose-50/20">
+                                <td class="px-4 py-3 text-left text-rose-700 font-bold">Không tán thành</td>
+                                <td id="count-1" class="px-4 py-3 text-lg font-bold">0</td>
+                                <td id="percent-1" class="px-4 py-3 text-rose-700 font-bold">0%</td>
+                            </tr>
+                            <tr class="bg-amber-50/20">
+                                <td class="px-4 py-3 text-left text-amber-700 font-bold">Ý kiến khác</td>
+                                <td id="count-2" class="px-4 py-3 text-lg font-bold">0</td>
+                                <td id="percent-2" class="px-4 py-3 text-amber-700 font-bold">0%</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- Canvas hiển thị biểu đồ -->
+                <div class="relative w-full h-56 flex items-center justify-center">
+                    <canvas id="votingChart"></canvas>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <!-- Chân trang: Nút Đặt lại hệ thống về 0 -->
+    <footer class="bg-slate-800 text-gray-400 text-xs py-3 text-center w-full">
+        <button onclick="resetSystem()" class="bg-red-700 hover:bg-red-800 text-white font-bold px-4 py-1.5 rounded shadow transition">
+            🔄 Khởi động lại (Đưa tất cả số phiếu về 0)
+        </button>
+    </footer>
+
+    <!-- XỬ LÝ LOGIC JAVASCRIPT -->
+    <script>
+        // 1. Tự động khởi tạo danh sách 12 đại biểu HĐND xã Thanh Mai
+        let dbVoters = {};
+        for (let i = 1; i <= 12; i++) {
+            // Định dạng mã: DB01, DB02, ..., DB12
+            let code = "DB" + (i < 10 ? "0" + i : i);
+            dbVoters[code] = {
+                name: "Đại biểu HĐND số " + (i < 10 ? "0" + i : i),
+                hasVoted: false
+            };
+        }
+
+        // 2. Thiết lập số phiếu gốc ban đầu BẰNG KHÔNG TOÀN BỘ
+        let voteData = [0, 0, 0]; 
+        const labels = ['Tán thành', 'Không tán thành', 'Ý kiến khác'];
+        const colors = ['#059669', '#e11d48', '#f59e0b'];
+        
+        let currentVoterId = null; 
+        let votingChart;
+
+        // Khởi động biểu đồ Chart.js
+        function initChart() {
+            const ctx = document.getElementById('votingChart').getContext('2d');
+            votingChart = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        data: voteData,
+                        backgroundColor: colors,
+                        borderRadius: 6
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: { legend: { display: false } },
+                    scales: { 
+                        y: { 
+                            beginAtZero: true, 
+                            max: 12, // Đặt mốc tối đa là 12 đại biểu
+                            ticks: { precision: 0 } 
+                        } 
+                    }
+                }
+            });
+            updateUI();
+        }
+
+        // Đăng nhập tài khoản đại biểu
+        function handleLogin() {
+            const idInput = document.getElementById('voter-id').value.trim().toUpperCase();
+            const errorElement = document.getElementById('login-error');
+
+            if (dbVoters[idInput]) {
+                currentVoterId = idInput;
+                errorElement.classList.add('hidden');
+                
+                document.getElementById('login-box').classList.replace('block', 'hidden');
+                document.getElementById('voting-box').classList.replace('hidden', 'block');
+                
+                document.getElementById('voter-name').innerText = dbVoters[idInput].name;
+
+                checkVoterStatus();
+            } else {
+                errorElement.classList.remove('hidden');
+            }
+        }
+
+        // Kiểm tra xem đại biểu đã biểu quyết chưa để khóa nút
+        function checkVoterStatus() {
+            const voteButtons = document.querySelectorAll('.vote-btn');
+            const alertBox = document.getElementById('voted-alert');
+
+            if (dbVoters[currentVoterId].hasVoted) {
+                voteButtons.forEach(btn => btn.classList.add('hidden'));
+                alertBox.classList.remove('hidden');
+            } else {
+                voteButtons.forEach(btn => btn.classList.remove('hidden'));
+                alertBox.classList.add('hidden');
+            }
+        }
+
+        // Đại biểu thực hiện bấm nút chọn phương án biểu quyết
+        function castVote(optionIndex) {
+            if (!currentVoterId || dbVoters[currentVoterId].hasVoted) return;
+
+            voteData[optionIndex] += 1; // Cộng 1 phiếu
+            dbVoters[currentVoterId].hasVoted = true; // Khóa tài khoản này không cho biểu quyết tiếp
+
+            updateUI();
+            checkVoterStatus();
+        }
+
+        // Cập nhật bảng dữ liệu và vẽ lại đồ thị phần trăm
+        function updateUI() {
+            const totalVotes = voteData.reduce((a, b) => a + b, 0);
+
+            voteData.forEach((votes, index) => {
+                const percentage = totalVotes > 0 ? ((votes / totalVotes) * 100).toFixed(1) : 0;
+                document.getElementById(`count-${index}`).innerText = votes;
+                document.getElementById(`percent-${index}`).innerText = `${percentage}%`;
+            });
+
+            votingChart.data.datasets[0].data = voteData;
+            votingChart.update();
+        }
+
+        // Đăng xuất
+        function handleLogout() {
+            currentVoterId = null;
+            document.getElementById('voter-id').value = "";
+            document.getElementById('voting-box').classList.replace('block', 'hidden');
+            document.getElementById('login-box').classList.replace('hidden', 'block');
+        }
+
+        // Hàm Đặt lại hệ thống về Không (0) theo yêu cầu
+        function resetSystem() {
+            if (confirm("Xác nhận đưa TẤT CẢ số phiếu về số 0 và cho phép 12 đại biểu bỏ phiếu lại?")) {
+                voteData = [0, 0, 0]; // Đưa về 0
+                for (let key in dbVoters) {
+                    dbVoters[key].hasVoted = false; // Mở khóa cho tất cả đại biểu
+                }
+                handleLogout();
+                updateUI();
+            }
+        }
+
+        window.onload = initChart;
+    </script>
+</body>
+</html>
