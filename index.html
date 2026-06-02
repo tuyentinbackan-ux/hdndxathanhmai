@@ -3,205 +3,135 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Hệ Thống Biểu Quyết HĐND Xã Thanh Mai</title>
+    <title>Màn Hình Kết Quả Trung Tâm - HĐND Xã Thanh Mai</title>
     <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
 </head>
-<body class="bg-slate-100 text-gray-800 font-sans min-h-screen flex flex-col justify-between">
+<body class="bg-slate-900 text-white font-sans min-h-screen flex flex-col justify-between">
 
-    <div class="container mx-auto px-4 py-6 max-w-5xl flex-grow">
-        <header class="text-center mb-8 border-b border-gray-300 pb-4">
-            <h1 class="text-2xl font-bold text-red-700 uppercase tracking-wide">HỘI ĐỒNG NHÂN DÂN XÃ THANH MAI</h1>
-            <p class="text-lg font-semibold text-blue-900 mt-1">Hệ Thống Biểu Quyết Trực Tuyến Đồng Bộ Thời Gian Thực</p>
+    <div class="container mx-auto px-6 py-6 max-w-6xl flex-grow flex flex-col justify-between">
+        <!-- Tiêu đề lớn hiển thị trên Máy Chiếu -->
+        <header class="text-center border-b border-slate-700 pb-4 mb-6">
+            <h1 class="text-3xl font-extrabold text-red-500 uppercase tracking-widest">HỘI ĐỒNG NHÂN DÂN XÃ THANH MAI</h1>
+            <p class="text-xl font-bold text-sky-400 mt-2">KẾT QUẢ BIỂU QUYẾT KỲ HỌP ĐIỆN TỬ THỜI GIAN THỰC</p>
         </header>
 
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
-            
-            <div class="bg-white p-6 rounded-xl shadow-md border border-gray-200">
-                <div id="login-box" class="block">
-                    <h2 class="text-xl font-bold mb-4 text-gray-700 border-b pb-2 text-center">Đại Biểu Đăng Nhập</h2>
-                    <p class="text-xs text-blue-800 bg-blue-50 p-3 rounded-lg mb-4">
-                        Mỗi đại biểu dùng điện thoại riêng, nhập mã từ <span class="font-bold">DB01</span> đến <span class="font-bold">DB12</span> để vào biểu quyết.
-                    </p>
-                    <div class="space-y-4">
-                        <input type="text" id="voter-id" placeholder="Nhập mã (Ví dụ: DB01)" class="w-full px-4 py-3 border border-gray-300 rounded-lg uppercase font-bold text-lg text-center tracking-widest">
-                        <button onclick="handleLogin()" class="w-full bg-blue-700 hover:bg-blue-800 text-white font-bold py-3 rounded-lg shadow-md">Xác nhận</button>
-                        <p id="login-error" class="text-red-500 text-sm text-center hidden font-medium">⚠️ Mã sai hoặc hệ thống chưa kết nối!</p>
+        <div class="grid grid-cols-1 lg:grid-cols-5 gap-8 flex-grow items-center">
+            <!-- Bảng số liệu chi tiết (Chiếm 2 phần) -->
+            <div class="bg-slate-800 p-6 rounded-2xl shadow-2xl border border-slate-700 lg:col-span-2">
+                <div class="flex justify-between items-center mb-6">
+                    <h2 class="text-lg font-bold text-slate-300">BẢNG THỐNG KÊ CHI TIẾT</h2>
+                    <span class="bg-blue-900/50 text-blue-300 border border-blue-700 text-xs px-3 py-1 rounded-full font-bold">Mốc: 12 Đại biểu</span>
+                </div>
+                
+                <div class="space-y-4">
+                    <div class="bg-emerald-950/40 border border-emerald-800/60 p-4 rounded-xl flex justify-between items-center">
+                        <span class="text-emerald-400 font-bold text-lg">👍 TÁN THÀNH</span>
+                        <div class="text-right">
+                            <span id="count-0" class="text-2xl font-black text-white mr-2">0</span>
+                            <span id="percent-0" class="text-sm font-bold text-emerald-500">0%</span>
+                        </div>
+                    </div>
+                    
+                    <div class="bg-rose-950/40 border border-rose-800/60 p-4 rounded-xl flex justify-between items-center">
+                        <span class="text-rose-400 font-bold text-lg">👎 KHÔNG TÁN THÀNH</span>
+                        <div class="text-right">
+                            <span id="count-1" class="text-2xl font-black text-white mr-2">0</span>
+                            <span id="percent-1" class="text-sm font-bold text-rose-500">0%</span>
+                        </div>
+                    </div>
+
+                    <div class="bg-amber-950/40 border border-amber-800/60 p-4 rounded-xl flex justify-between items-center">
+                        <span class="text-amber-400 font-bold text-lg">🤔 Ý KIẾN KHÁC</span>
+                        <div class="text-right">
+                            <span id="count-2" class="text-2xl font-black text-white mr-2">0</span>
+                            <span id="percent-2" class="text-sm font-bold text-amber-500">0%</span>
+                        </div>
                     </div>
                 </div>
 
-                <div id="voting-box" class="hidden">
-                    <div class="flex justify-between items-center bg-gray-50 p-3 rounded-lg border border-gray-200 mb-6">
-                        <p id="voter-name" class="font-bold text-blue-800">Đại biểu</p>
-                        <button onclick="handleLogout()" class="text-xs text-red-600 hover:underline">Đăng xuất</button>
-                    </div>
-                    <h3 class="text-md font-bold mb-4">Xin mời Đại biểu cho ý kiến biểu quyết:</h3>
-                    <div class="space-y-3">
-                        <button onclick="castVote(0)" class="vote-btn w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-4 rounded-lg flex justify-center">👍 TÁN THÀNH</button>
-                        <button onclick="castVote(1)" class="vote-btn w-full bg-rose-600 hover:bg-rose-700 text-white font-bold py-4 rounded-lg flex justify-center">👎 KHÔNG TÁN THÀNH</button>
-                        <button onclick="castVote(2)" class="vote-btn w-full bg-amber-500 hover:bg-amber-600 text-white font-bold py-4 rounded-lg flex justify-center">🤔 Ý KIẾN KHÁC</button>
-                    </div>
-                    <div id="voted-alert" class="hidden mt-6 p-4 bg-emerald-50 border border-emerald-300 text-emerald-800 rounded-lg text-center font-semibold">
-                        🎉 Đã ghi nhận phiếu biểu quyết của Đại biểu lên hệ thống!
-                    </div>
+                <div class="mt-6 pt-4 border-t border-slate-700 flex justify-between text-xs text-slate-400 font-mono">
+                    <span>Trạng thái kết nối:</span>
+                    <span id="status">🟢 ĐANG ĐỒNG BỘ ĐÁM MÂY</span>
                 </div>
             </div>
 
-            <div class="bg-white p-6 rounded-xl shadow-md border border-gray-200 flex flex-col justify-between">
-                <div>
-                    <div class="flex justify-between items-center border-b pb-2 mb-4">
-                        <h2 class="text-lg font-bold text-gray-700">Kết quả kiểm phiếu (Tổng: 12 ĐB)</h2>
-                    </div>
-                    <table class="min-w-full text-center text-sm mb-6">
-                        <thead class="bg-gray-50 font-bold">
-                            <tr><th class="px-4 py-2 text-left">Phương án</th><th class="px-4 py-2">Số phiếu</th><th class="px-4 py-2">Tỷ lệ</th></tr>
-                        </thead>
-                        <tbody class="font-medium">
-                            <tr class="bg-emerald-50/20"><td class="px-4 py-2 text-left text-emerald-700">Tán thành</td><td id="count-0" class="text-lg font-bold">0</td><td id="percent-0">0%</td></tr>
-                            <tr class="bg-rose-50/20"><td class="px-4 py-2 text-left text-rose-700">Không tán thành</td><td id="count-1" class="text-lg font-bold">0</td><td id="percent-1">0%</td></tr>
-                            <tr class="bg-amber-50/20"><td class="px-4 py-2 text-left text-amber-700">Ý kiến khác</td><td id="count-2" class="text-lg font-bold">0</td><td id="percent-2">0%</td></tr>
-                        </tbody>
-                    </table>
+            <!-- Biểu đồ cột cực lớn cho máy chiếu (Chiếm 3 phần) -->
+            <div class="bg-slate-800 p-6 rounded-2xl shadow-2xl border border-slate-700 lg:col-span-3 h-full min-h-[350px] flex items-center">
+                <div class="w-full h-80">
+                    <canvas id="mainChart"></canvas>
                 </div>
-                <div class="relative w-full h-56"><canvas id="votingChart"></canvas></div>
             </div>
-
         </div>
     </div>
 
-    <footer class="bg-slate-800 py-3 text-center w-full">
-        <button onclick="resetSystemOnFirebase()" class="bg-red-700 hover:bg-red-800 text-white font-bold px-4 py-1.5 rounded text-xs">
-            🔄 Đặt lại toàn bộ số phiếu về 0 (Phiên họp mới)
+    <!-- Thanh công cụ reset phiếu của Ban tổ chức dưới chân máy chủ -->
+    <footer class="bg-slate-950 py-3 text-center w-full border-t border-slate-800">
+        <button onclick="resetServer()" class="bg-red-700 hover:bg-red-800 text-white font-bold px-5 py-1.5 rounded-lg text-xs shadow-lg transition">
+            🔄 KHỞI TẠO PHIÊN HỌP MỚI (ĐƯA TẤT CẢ SỐ PHIẾU VỀ 0)
         </button>
     </footer>
 
     <script>
-        // --- 1. CẤU HÌNH KẾT NỐI DATABASE FIREBASE ---
-        const firebaseConfig = {
-            // dán link Realtime Database của bạn vào đây
-            databaseURL: "https://tuyentinbackan-ux.github.io/hdndxathanhmai.firebaseio.com" 
-        };
+        const firebaseConfig = { databaseURL: "https://hdnd-thanhmai-default-rtdb.asia-southeast1.firebasedatabase.app" };
         firebase.initializeApp(firebaseConfig);
         const db = firebase.database();
 
-        // Khởi tạo danh sách 12 đại biểu cục bộ
-        let dbVoters = {};
-        for(let i=1; i<=12; i++) {
-            let code = "DB" + (i < 10 ? "0" + i : i);
-            dbVoters[code] = { name: "Đại biểu HĐND số " + (i < 10 ? "0" + i : i) };
-        }
-
         let voteData = [0, 0, 0];
-        let currentVoterId = null;
-        let votingChart;
+        let mainChart;
 
-        // --- 2. LẮNG NGHE DỮ LIỆU THỜI GIAN THỰC TỪ INTERNET ---
-        function initFirebaseSync() {
-            // Khi có ai đó bấm nút, dữ liệu trên mạng thay đổi -> Hàm này tự động chạy và cập nhật biểu đồ ngay lập tức
+        // Máy chủ lắng nghe liên tục biến động từ 12 máy con cầm tay gửi về
+        function initSync() {
             db.ref('session_hdnd').on('value', (snapshot) => {
                 const data = snapshot.val();
-                if (data) {
-                    voteData = data.votes || [0, 0, 0];
-                    // Cập nhật trạng thái đã bỏ phiếu của các đại biểu từ server
-                    if (data.votedList) {
-                        Object.keys(dbVoters).forEach(code => {
-                            dbVoters[code].hasVoted = data.votedList[code] || false;
-                        });
-                    } else {
-                        Object.keys(dbVoters).forEach(code => dbVoters[code].hasVoted = false);
-                    }
+                if (data && data.votes) {
+                    voteData = data.votes;
                 } else {
                     voteData = [0, 0, 0];
                 }
                 updateUI();
-                if(currentVoterId) checkVoterStatus();
             });
         }
 
-        // Khởi tạo Biểu đồ
         function initChart() {
-            const ctx = document.getElementById('votingChart').getContext('2d');
-            votingChart = new Chart(ctx, {
+            const ctx = document.getElementById('mainChart').getContext('2d');
+            mainChart = new Chart(ctx, {
                 type: 'bar',
                 data: {
                     labels: ['Tán thành', 'Không tán thành', 'Ý kiến khác'],
-                    datasets: [{ data: voteData, backgroundColor: ['#059669', '#e11d48', '#f59e0b'], borderRadius: 6 }]
+                    datasets: [{ data: voteData, backgroundColor: ['#10b981', '#f43f5e', '#f59e0b'], borderRadius: 8 }]
                 },
-                options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true, max: 12, ticks: { precision: 0 } } } }
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: { legend: { display: false } },
+                    scales: {
+                        x: { grid: { display: false }, ticks: { color: '#94a3b8', font: { size: 14, weight: 'bold' } } },
+                        y: { min: 0, max: 12, ticks: { stepSize: 1, color: '#94a3b8', precision: 0 } }
+                    }
+                }
             });
-            initFirebaseSync();
-        }
-
-        // Xử lý đăng nhập
-        function handleLogin() {
-            const idInput = document.getElementById('voter-id').value.trim().toUpperCase();
-            if (dbVoters[idInput]) {
-                currentVoterId = idInput;
-                document.getElementById('login-box').classList.replace('block', 'hidden');
-                document.getElementById('voting-box').classList.replace('hidden', 'block');
-                document.getElementById('voter-name').innerText = dbVoters[idInput].name;
-                checkVoterStatus();
-            } else {
-                document.getElementById('login-error').classList.remove('hidden');
-            }
-        }
-
-        function checkVoterStatus() {
-            const voteButtons = document.querySelectorAll('.vote-btn');
-            const alertBox = document.getElementById('voted-alert');
-            if (dbVoters[currentVoterId].hasVoted) {
-                voteButtons.forEach(btn => btn.classList.add('hidden'));
-                alertBox.classList.remove('hidden');
-            } else {
-                voteButtons.forEach(btn => btn.classList.remove('hidden'));
-                alertBox.classList.add('hidden');
-            }
-        }
-
-        // --- 3. ĐẠI BIỂU BẤM PHIẾU -> ĐẨY LÊN INTERNET ---
-        function castVote(optionIndex) {
-            if (!currentVoterId || dbVoters[currentVoterId].hasVoted) return;
-
-            voteData[optionIndex] += 1;
-            
-            // Cập nhật đồng thời số phiếu và khóa mã đại biểu này lại trên Cloud Firebase
-            db.ref('session_hdnd').update({
-                votes: voteData,
-                [`votedList/${currentVoterId}`]: true
-            });
+            initSync();
         }
 
         function updateUI() {
-            const totalVotes = voteData.reduce((a, b) => a + b, 0);
+            const total = voteData.reduce((a, b) => a + b, 0);
             voteData.forEach((votes, index) => {
-                const percentage = totalVotes > 0 ? ((votes / totalVotes) * 100).toFixed(1) : 0;
+                const pct = total > 0 ? ((votes / total) * 100).toFixed(1) : 0;
                 document.getElementById(`count-${index}`).innerText = votes;
-                document.getElementById(`percent-${index}`).innerText = `${percentage}%`;
+                document.getElementById(`percent-${index}`).innerText = `${pct}%`;
             });
-            if(votingChart) {
-                votingChart.data.datasets[0].data = voteData;
-                votingChart.update();
+            if (mainChart) {
+                mainChart.data.datasets[0].data = voteData;
+                mainChart.update();
             }
         }
 
-        function handleLogout() {
-            currentVoterId = null;
-            document.getElementById('voter-id').value = "";
-            document.getElementById('voting-box').classList.replace('block', 'hidden');
-            document.getElementById('login-box').classList.replace('hidden', 'block');
-        }
-
-        // --- 4. ADMIN XOÁ TOÀN BỘ SỐ PHIẾU VỀ 0 TRÊN MẠNG ---
-        function resetSystemOnFirebase() {
-            if (confirm("Xác nhận đưa TẤT CẢ số phiếu trên hệ thống mạng về 0?")) {
-                db.ref('session_hdnd').set({
-                    votes: [0, 0, 0],
-                    votedList: {}
-                });
-                handleLogout();
+        function resetServer() {
+            if (confirm("Đồng chí có chắc chắn xóa sạch dữ liệu để bắt đầu nội dung biểu quyết mới?")) {
+                db.ref('session_hdnd').set({ votes: [0, 0, 0], votedList: {} });
             }
         }
 
