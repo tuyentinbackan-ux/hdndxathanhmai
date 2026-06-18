@@ -1,141 +1,716 @@
 <!DOCTYPE html>
 <html lang="vi">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Màn Hình Kết Quả Trung Tâm - HĐND Xã Thanh Mai</title>
-    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Hệ Thống Biểu Quyết HĐND Xã Thanh Mai</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            govred: {
+              50: '#fef2f2',
+              100: '#fee2e2',
+              500: '#ef4444',
+              600: '#dc2626',
+              700: '#b91c1c',
+              800: '#991b1b',
+              900: '#7f1d1d',
+            }
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(10px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    .animate-fadeIn {
+      animation: fadeIn 0.3s ease-out forwards;
+    }
+  </style>
 </head>
-<body class="bg-slate-900 text-white font-sans min-h-screen flex flex-col justify-between">
+<body class="min-h-screen bg-slate-100 font-sans text-slate-800 flex flex-col selection:bg-red-500 selection:text-white">
 
-    <div class="container mx-auto px-6 py-6 max-w-6xl flex-grow flex flex-col justify-between">
-        <!-- Tiêu đề lớn hiển thị trên Máy Chiếu -->
-        <header class="text-center border-b border-slate-700 pb-4 mb-6">
-            <h1 class="text-3xl font-extrabold text-red-500 uppercase tracking-widest">HỘI ĐỒNG NHÂN DÂN XÃ THANH MAI</h1>
-            <p class="text-xl font-bold text-sky-400 mt-2">KẾT QUẢ BIỂU QUYẾT KỲ HỌP ĐIỆN TỬ THỜI GIAN THỰC</p>
-        </header>
+  <!-- Header -->
+  <header id="app-header" class="bg-gradient-to-r from-govred-800 via-govred-600 to-govred-900 text-white shadow-xl relative border-b-4 border-yellow-500">
+  </header>
 
-        <div class="grid grid-cols-1 lg:grid-cols-5 gap-8 flex-grow items-center">
-            <!-- Bảng số liệu chi tiết (Chiếm 2 phần) -->
-            <div class="bg-slate-800 p-6 rounded-2xl shadow-2xl border border-slate-700 lg:col-span-2">
-                <div class="flex justify-between items-center mb-6">
-                    <h2 class="text-lg font-bold text-slate-300">BẢNG THỐNG KÊ CHI TIẾT</h2>
-                    <span class="bg-blue-900/50 text-blue-300 border border-blue-700 text-xs px-3 py-1 rounded-full font-bold">Mốc: 12 Đại biểu</span>
-                </div>
-                
-                <div class="space-y-4">
-                    <div class="bg-emerald-950/40 border border-emerald-800/60 p-4 rounded-xl flex justify-between items-center">
-                        <span class="text-emerald-400 font-bold text-lg">👍 TÁN THÀNH</span>
-                        <div class="text-right">
-                            <span id="count-0" class="text-2xl font-black text-white mr-2">0</span>
-                            <span id="percent-0" class="text-sm font-bold text-emerald-500">0%</span>
-                        </div>
-                    </div>
-                    
-                    <div class="bg-rose-950/40 border border-rose-800/60 p-4 rounded-xl flex justify-between items-center">
-                        <span class="text-rose-400 font-bold text-lg">👎 KHÔNG TÁN THÀNH</span>
-                        <div class="text-right">
-                            <span id="count-1" class="text-2xl font-black text-white mr-2">0</span>
-                            <span id="percent-1" class="text-sm font-bold text-rose-500">0%</span>
-                        </div>
-                    </div>
+  <!-- Main Content container -->
+  <main class="flex-1 max-w-7xl w-full mx-auto px-4 py-8" id="main-content">
+    <div id="active-view-container"></div>
+  </main>
 
-                    <div class="bg-amber-950/40 border border-amber-800/60 p-4 rounded-xl flex justify-between items-center">
-                        <span class="text-amber-400 font-bold text-lg">🤔 Ý KIẾN KHÁC</span>
-                        <div class="text-right">
-                            <span id="count-2" class="text-2xl font-black text-white mr-2">0</span>
-                            <span id="percent-2" class="text-sm font-bold text-amber-500">0%</span>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="mt-6 pt-4 border-t border-slate-700 flex justify-between text-xs text-slate-400 font-mono">
-                    <span>Trạng thái kết nối:</span>
-                    <span id="status">🟢 ĐANG ĐỒNG BỘ ĐÁM MÂY</span>
-                </div>
-            </div>
-
-            <!-- Biểu đồ cột cực lớn cho máy chiếu (Chiếm 3 phần) -->
-            <div class="bg-slate-800 p-6 rounded-2xl shadow-2xl border border-slate-700 lg:col-span-3 h-full min-h-[350px] flex items-center">
-                <div class="w-full h-80">
-                    <canvas id="mainChart"></canvas>
-                </div>
-            </div>
-        </div>
+  <!-- Footer -->
+  <footer class="bg-slate-900 text-slate-400 py-6 mt-12 border-t border-slate-800 text-xs text-center">
+    <div class="max-w-7xl mx-auto px-4 space-y-2">
+      <p class="font-bold text-slate-300 text-sm">
+        HỘI ĐỒNG NHÂN DÂN XÃ THANH MAI, TỈNH THÁI NGUYÊN
+      </p>
+      <p>
+        Phần mềm được thiết kế phục vụ công tác biểu quyết, lấy ý kiến đại biểu trực tuyến đồng bộ thời gian thực.
+      </p>
+      <p class="text-slate-500">
+        Nhiệm kỳ 2026 - 2031 | Hệ Thống Số Hóa Cơ Quan Nhà Nước
+      </p>
     </div>
+  </footer>
 
-    <!-- Thanh công cụ reset phiếu của Ban tổ chức dưới chân máy chủ -->
-    <footer class="bg-slate-950 py-3 text-center w-full border-t border-slate-800">
-        <button onclick="resetServer()" class="bg-red-700 hover:bg-red-800 text-white font-bold px-5 py-1.5 rounded-lg text-xs shadow-lg transition">
-            🔄 KHỞI TẠO PHIÊN HỌP MỚI (ĐƯA TẤT CẢ SỐ PHIẾU VỀ 0)
-        </button>
-    </footer>
+  <!-- Hộp thoại thông báo / xác nhận nội bộ -->
+  <div id="confirm-modal" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/70 backdrop-blur-sm hidden">
+    <div class="bg-white rounded-3xl p-6 md:p-8 max-w-md w-full shadow-2xl border border-slate-100 space-y-6 transform scale-100 transition">
+      <div class="flex items-start gap-4">
+        <div class="p-3 bg-red-100 text-red-600 rounded-2xl">
+          <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+          </svg>
+        </div>
+        <div class="space-y-1">
+          <h3 class="font-extrabold text-lg text-slate-900">Thông báo hệ thống</h3>
+          <p id="confirm-message" class="text-sm text-slate-600 leading-relaxed"></p>
+        </div>
+      </div>
+      <div class="flex justify-end gap-3 pt-2">
+        <button id="modal-cancel-btn" class="bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold px-5 py-2.5 rounded-xl text-xs transition active:scale-95">Hủy Bỏ</button>
+        <button id="modal-confirm-btn" class="bg-red-600 hover:bg-red-700 text-white font-bold px-5 py-2.5 rounded-xl text-xs transition shadow-lg shadow-red-200 active:scale-95 hidden">Xác Nhận</button>
+      </div>
+    </div>
+  </div>
 
-    <script>
-        const firebaseConfig = { databaseURL: "https://hdnd-thanhmai-default-rtdb.asia-southeast1.firebasedatabase.app" };
-        firebase.initializeApp(firebaseConfig);
-        const db = firebase.database();
+  <!-- Realtime Database Script Setup -->
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+    import { getAuth, signInAnonymously, signInWithCustomToken } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+    import { getFirestore, doc, setDoc, collection, onSnapshot, getDocs, deleteDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
-        let voteData = [0, 0, 0];
-        let mainChart;
+    // 1. Tự động tìm kiếm cấu hình được cấp bởi môi trường Canvas, nếu không có sẽ tự động tạo fallback
+    let configToUse = null;
+    let customTokenToUse = null;
 
-        // Máy chủ lắng nghe liên tục biến động từ 12 máy con cầm tay gửi về
-        function initSync() {
-            db.ref('session_hdnd').on('value', (snapshot) => {
-                const data = snapshot.val();
-                if (data && data.votes) {
-                    voteData = data.votes;
-                } else {
-                    voteData = [0, 0, 0];
-                }
-                updateUI();
-            });
+    if (typeof __firebase_config !== 'undefined' && __firebase_config) {
+      try {
+        configToUse = JSON.parse(__firebase_config);
+      } catch (e) {
+        console.error("Lỗi parse cấu hình môi trường:", e);
+      }
+    }
+
+    if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
+      customTokenToUse = __initial_auth_token;
+    }
+
+    // Nếu chạy độc lập ở ngoài không có cấu hình hệ thống, sử dụng cấu hình mặc định này
+    if (!configToUse) {
+      configToUse = {
+        apiKey: "AIzaSyAzYOUR_ACTUAL_API_KEY_HERE",
+        authDomain: "hdnd-thanh-mai.firebaseapp.com",
+        projectId: "hdnd-thanh-mai",
+        storageBucket: "hdnd-thanh-mai.appspot.com",
+        messagingSenderId: "1234567890",
+        appId: "1:123456:web:abcd123"
+      };
+    }
+a
+    // Định danh phiên làm việc cố định
+    const appId = typeof __app_id !== 'undefined' ? __app_id : 'thanh-mai-hdnd-voting-v1';
+
+    // Nội dung mặc định ban đầu của phần mềm
+    const DEFAULT_RESOLUTION = 'Nghị quyết thông qua kế hoạch phát triển kinh tế - xã hội xã Thanh Mai năm 2026';
+
+    // 12 Đại biểu Hội đồng nhân dân xã Thanh Mai
+    const DELEGATES = [
+      { id: 'db01', name: 'Hà Tiến Cường', role: 'Chủ tịch HĐND', pin: '1111' },
+      { id: 'db02', name: 'Hà Đức Huy', role: 'Phó Chủ tịch HĐND', pin: '2222' },
+      { id: 'db03', name: 'Phùng Thế Tụy', role: 'Ủy viên Thường trực', pin: '3333' },
+      { id: 'db04', name: 'Nông Thị lam Luyến', role: 'Đại biểu Tổ 1', pin: '4444' },
+      { id: 'db05', name: 'Trần Danh Tuyên', role: 'Đại biểu Tổ 2', pin: '5555' },
+      { id: 'db06', name: 'Lường Văn Huân', role: 'Đại biểu Tổ 2', pin: '6666' },
+      { id: 'db07', name: 'Hà Văn Huy', role: 'Đại biểu Tổ 2', pin: '7777' },
+      { id: 'db08', name: 'Hà Thúy Vin', role: 'Đại biểu Tổ 3', pin: '8888' },
+      { id: 'db09', name: 'Hà Văn Mẫn', role: 'Đại biểu Tổ 3', pin: '9999' },
+      { id: 'db10', name: 'Dương Thị Bưởi', role: 'Đại biểu Tổ 3', pin: '1010' },
+      { id: 'db11', name: 'Hà Đức Huy 2', role: 'Đại biểu Tổ 2', pin: '2020' },
+      { id: 'db12', name: 'Bùi Kim Tuyến', role: 'Đại biểu Tổ 1', pin: '3030' },
+    ];
+
+    const ADMIN_PIN = '9999';
+
+    // Khởi tạo các biến hệ thống
+    let db = null;
+    let auth = null;
+    let firebaseEnabled = false; // Mặc định tắt, chỉ bật khi kết nối Firebase hợp lệ
+
+    const state = {
+      user: null,
+      currentView: 'portal', // portal | delegate | board
+      currentDelegate: null,
+      isAdminMode: false,
+      session: {
+        resolutionTitle: DEFAULT_RESOLUTION,
+        isLocked: false,
+        isSecret: false,
+        updatedAt: Date.now()
+      },
+      votes: {}, 
+      showPinHint: false,
+      tempSelectedDelegateId: '',
+      tempInputPin: ''
+    };
+
+    // Kiểm tra lưu trữ nội bộ cục bộ
+    function loadLocalState() {
+      const savedSession = localStorage.getItem('hdnd_session');
+      const savedVotes = localStorage.getItem('hdnd_votes');
+      if (savedSession) {
+        try {
+          state.session = JSON.parse(savedSession);
+        } catch(e) { console.error(e); }
+      }
+      if (savedVotes) {
+        try {
+          state.votes = JSON.parse(savedVotes);
+        } catch(e) { console.error(e); }
+      }
+    }
+
+    function saveLocalState() {
+      localStorage.setItem('hdnd_session', JSON.stringify(state.session));
+      localStorage.setItem('hdnd_votes', JSON.stringify(state.votes));
+    }
+
+    // Lắng nghe dữ liệu đồng bộ
+    async function initFirebaseAndSync() {
+      // Nếu API key vẫn giữ nguyên dạng Placeholder, không gọi Firebase để tránh vấp lỗi Auth
+      const isPlaceholder = configToUse.apiKey.includes("YOUR_ACTUAL_API_KEY") || configToUse.apiKey === "";
+      
+      if (isPlaceholder) {
+        console.warn("Sử dụng thông số kết nối mẫu. Hệ thống tự khởi động chế độ Chạy Thử Nghiệm Ngoại Tuyến (Local Sandbox).");
+        firebaseEnabled = false;
+        loadLocalState();
+        renderApp();
+        return;
+      }
+
+      try {
+        const app = initializeApp(configToUse);
+        auth = getAuth(app);
+        db = getFirestore(app);
+
+        // Đăng nhập vô danh hoặc theo Token đặc quyền
+        if (customTokenToUse) {
+          await signInWithCustomToken(auth, customTokenToUse);
+        } else {
+          await signInAnonymously(auth);
+        }
+        
+        firebaseEnabled = true;
+        setupRealtimeListeners();
+      } catch (err) {
+        console.error("Không thể kết nối Firebase (vui lòng kiểm tra lại cấu hình). Tự động chuyển sang chế độ Thử Nghiệm Ngoại Tuyến:", err);
+        firebaseEnabled = false;
+        loadLocalState();
+        renderApp();
+      }
+    }
+
+    function setupRealtimeListeners() {
+      if (!db) return;
+
+      // Đồng bộ cấu hình phiên họp từ máy chủ
+      const sessionDocRef = doc(db, 'artifacts', appId, 'public', 'data', 'session', 'active');
+      onSnapshot(sessionDocRef, (docSnap) => {
+        if (docSnap.exists()) {
+          state.session = docSnap.data();
+          renderApp();
+        } else {
+          setDoc(sessionDocRef, state.session);
+        }
+      }, (err) => {
+        console.warn("Lỗi đồng bộ cấu hình phiên họp. Tiếp tục hiển thị ngoại tuyến.", err);
+      });
+
+      // Đồng bộ danh sách kết quả bỏ phiếu từ máy chủ
+      const votesColRef = collection(db, 'artifacts', appId, 'public', 'data', 'votes');
+      onSnapshot(votesColRef, (querySnap) => {
+        const votesMap = {};
+        querySnap.forEach((doc) => {
+          votesMap[doc.id] = doc.data().vote;
+        });
+        state.votes = votesMap;
+        renderApp();
+      }, (err) => {
+        console.warn("Lỗi đồng bộ kết quả biểu quyết. Tiếp tục hiển thị ngoại tuyến.", err);
+      });
+    }
+
+    // Hành động xử lý dữ liệu biểu quyết
+    async function handleVote(choice) {
+      if (!state.currentDelegate) return;
+      if (state.session.isLocked) {
+        showNotice("Hệ thống biểu quyết đã khóa. Bạn không thể thực hiện thao tác này.");
+        return;
+      }
+
+      const delegateId = state.currentDelegate.id;
+      state.votes[delegateId] = choice;
+      saveLocalState();
+      renderApp();
+
+      if (firebaseEnabled && db) {
+        try {
+          const voteDocRef = doc(db, 'artifacts', appId, 'public', 'data', 'votes', delegateId);
+          await setDoc(voteDocRef, {
+            delegateId,
+            delegateName: state.currentDelegate.name,
+            vote: choice,
+            timestamp: Date.now()
+          });
+        } catch (e) {
+          console.error("Lỗi lưu phiếu bầu lên Firebase: ", e);
+        }
+      }
+    }
+
+    async function handleUpdateSession(title, isLocked, isSecret) {
+      state.session = {
+        resolutionTitle: title,
+        isLocked,
+        isSecret,
+        updatedAt: Date.now()
+      };
+      saveLocalState();
+      renderApp();
+
+      if (firebaseEnabled && db) {
+        try {
+          const sessionDocRef = doc(db, 'artifacts', appId, 'public', 'data', 'session', 'active');
+          await setDoc(sessionDocRef, state.session);
+        } catch (e) {
+          console.error("Lỗi cập nhật phiên họp lên Firebase: ", e);
+        }
+      }
+    }
+
+    async function handleResetVotes() {
+      state.votes = {};
+      saveLocalState();
+      renderApp();
+
+      if (firebaseEnabled && db) {
+        try {
+          const votesColRef = collection(db, 'artifacts', appId, 'public', 'data', 'votes');
+          const querySnap = await getDocs(votesColRef);
+          const promises = [];
+          querySnap.forEach((docSnap) => {
+            promises.push(deleteDoc(doc(db, 'artifacts', appId, 'public', 'data', 'votes', docSnap.id)));
+          });
+          await Promise.all(promises);
+        } catch (e) {
+          console.error("Lỗi xóa phiếu bầu trên Firebase: ", e);
+        }
+      }
+    }
+
+    // Khôi phục mặc định ban đầu
+    async function handleRestoreToDefault() {
+      state.votes = {};
+      state.session = {
+        resolutionTitle: DEFAULT_RESOLUTION,
+        isLocked: false,
+        isSecret: false,
+        updatedAt: Date.now()
+      };
+      saveLocalState();
+      renderApp();
+
+      if (firebaseEnabled && db) {
+        try {
+          // Cập nhật lại cấu hình phiên về mặc định
+          const sessionDocRef = doc(db, 'artifacts', appId, 'public', 'data', 'session', 'active');
+          await setDoc(sessionDocRef, state.session);
+
+          // Xóa toàn bộ phiếu cũ trên hệ thống đám mây
+          const votesColRef = collection(db, 'artifacts', appId, 'public', 'data', 'votes');
+          const querySnap = await getDocs(votesColRef);
+          const promises = [];
+          querySnap.forEach((docSnap) => {
+            promises.push(deleteDoc(doc(db, 'artifacts', appId, 'public', 'data', 'votes', docSnap.id)));
+          });
+          await Promise.all(promises);
+        } catch (e) {
+          console.error("Lỗi khôi phục mặc định trên Firebase: ", e);
+        }
+      }
+    }
+
+    // Giao diện hội thoại Notice/Confirm tự chế
+    function showNotice(msg) {
+      const modal = document.getElementById('confirm-modal');
+      const msgEl = document.getElementById('confirm-message');
+      const cancelBtn = document.getElementById('modal-cancel-btn');
+      const confirmBtn = document.getElementById('modal-confirm-btn');
+
+      msgEl.textContent = msg;
+      cancelBtn.textContent = 'Đóng';
+      confirmBtn.classList.add('hidden');
+      modal.classList.remove('hidden');
+      cancelBtn.onclick = () => modal.classList.add('hidden');
+    }
+
+    function showConfirm(msg, onConfirm) {
+      const modal = document.getElementById('confirm-modal');
+      const msgEl = document.getElementById('confirm-message');
+      const cancelBtn = document.getElementById('modal-cancel-btn');
+      const confirmBtn = document.getElementById('modal-confirm-btn');
+
+      msgEl.textContent = msg;
+      cancelBtn.textContent = 'Hủy Bỏ';
+      confirmBtn.classList.remove('hidden');
+      modal.classList.remove('hidden');
+
+      cancelBtn.onclick = () => modal.classList.add('hidden');
+      confirmBtn.onclick = () => {
+        onConfirm();
+        modal.classList.add('hidden');
+      };
+    }
+
+    // Vẽ giao diện Header
+    function renderHeader() {
+      const headerEl = document.getElementById('app-header');
+      let actionButtonsHTML = '';
+      
+      if (state.currentView !== 'portal') {
+        actionButtonsHTML += `
+          <button id="nav-home-btn" class="bg-govred-900/60 hover:bg-govred-900 border border-govred-500 text-red-100 font-bold py-2 px-4 rounded-xl text-sm transition-all shadow-md active:scale-95">
+            Trở về Trang Chủ
+          </button>
+        `;
+      }
+
+      if (state.currentDelegate) {
+        actionButtonsHTML += `
+          <div class="bg-yellow-500 text-slate-900 font-bold py-2 px-4 rounded-xl text-sm shadow-md flex items-center gap-2 border border-yellow-300">
+            <span>ĐB: ${state.currentDelegate.name}</span>
+            <button id="logout-delegate-btn" class="ml-2 hover:text-red-700 p-0.5 rounded transition">
+              <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" /></svg>
+            </button>
+          </div>
+        `;
+      }
+
+      if (state.isAdminMode) {
+        actionButtonsHTML += `
+          <div class="bg-amber-500 text-slate-950 font-black py-2 px-4 rounded-xl text-xs uppercase tracking-wider shadow-md flex items-center gap-2 border border-amber-300">
+            <span>Quyền: Chủ Tọa</span>
+            <button id="logout-admin-btn" class="ml-2 hover:text-red-900 p-0.5 rounded transition">
+              <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" /></svg>
+            </button>
+          </div>
+        `;
+      }
+
+      headerEl.innerHTML = `
+        <div class="absolute inset-0 bg-[radial-gradient(circle_at_30%_20%,rgba(255,255,255,0.1),transparent)] pointer-events-none"></div>
+        <div class="max-w-7xl mx-auto px-4 py-4 sm:py-6 flex flex-col md:flex-row items-center justify-between gap-4 relative z-10">
+          <div class="flex items-center gap-4">
+            <div class="bg-yellow-500 p-2.5 rounded-full shadow-lg border border-yellow-300 flex items-center justify-center">
+              <svg class="w-12 h-12 text-govred-600" viewBox="0 0 100 100" fill="currentColor">
+                <circle cx="50" cy="50" r="45" fill="#da251d" stroke="#ffd700" stroke-width="3" />
+                <path d="M 50,22 L 58,45 L 82,45 L 63,59 L 70,82 L 50,68 L 30,82 L 37,59 L 18,45 L 42,45 Z" fill="#ffd700" />
+              </svg>
+            </div>
+            <div class="text-center md:text-left">
+              <span class="text-xs uppercase tracking-widest text-yellow-300 font-bold block mb-1">CỘNG HÒA XÃ HỘI CHỦ NGHĨA VIỆT NAM</span>
+              <h1 class="text-lg md:text-2xl font-black uppercase tracking-wide text-white drop-shadow-md">HĐND XÃ THANH MAI</h1>
+              <span class="text-xs md:text-sm text-red-100 font-medium block">Hệ Thống Biểu Quyết Điện Tử Nhiệm Kỳ 2026 - 2031</span>
+            </div>
+          </div>
+          <div class="flex flex-wrap items-center gap-3">${actionButtonsHTML}</div>
+        </div>
+      `;
+
+      if (document.getElementById('nav-home-btn')) {
+        document.getElementById('nav-home-btn').onclick = () => { state.currentView = 'portal'; state.currentDelegate = null; state.isAdminMode = false; renderApp(); };
+      }
+      if (document.getElementById('logout-delegate-btn')) {
+        document.getElementById('logout-delegate-btn').onclick = () => { state.currentDelegate = null; state.currentView = 'portal'; renderApp(); };
+      }
+      if (document.getElementById('logout-admin-btn')) {
+        document.getElementById('logout-admin-btn').onclick = () => { state.isAdminMode = false; state.currentView = 'portal'; renderApp(); };
+      }
+    }
+
+    // Vẽ Trang chủ lựa chọn (Portal)
+    function renderPortal() {
+      const container = document.getElementById('active-view-container');
+      let delegateOptions = DELEGATES.map(d => `<option value="${d.id}">${d.name} (${d.role})</option>`).join('');
+
+      let hintHTML = '';
+      if (state.showPinHint) {
+        hintHTML = `<div class="mt-2 bg-blue-50/70 p-3 rounded-xl text-xs space-y-1 text-slate-700 max-h-40 overflow-y-auto"><p class="font-bold text-blue-800">Mã PIN Danh Sách:</p>${DELEGATES.map(d => `<div class="flex justify-between border-b pb-1"><span>${d.name}</span><span class="font-mono font-bold text-blue-700">${d.pin}</span></div>`).join('')}</div>`;
+      }
+
+      const connectionStatusBadge = firebaseEnabled 
+        ? `<div class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-emerald-100 text-emerald-800 border border-emerald-200">
+            <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+            Kết Nối Máy Chủ Trực Tuyến (Online)
+           </div>`
+        : `<div class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-amber-100 text-amber-800 border border-amber-200">
+            <span class="w-2 h-2 rounded-full bg-amber-500"></span>
+            Chế độ chạy cục bộ Thử Nghiệm (Local Mode)
+           </div>`;
+
+      container.innerHTML = `
+        <div class="space-y-8 animate-fadeIn">
+          <div class="bg-white rounded-3xl p-6 md:p-8 shadow-xl border border-slate-200 text-center max-w-3xl mx-auto space-y-4">
+            <div class="mb-2">
+              ${connectionStatusBadge}
+            </div>
+            <h2 class="text-2xl md:text-3xl font-bold text-slate-900">Hệ Thống Biểu Quyết Trực Tuyến Thời Gian Thực</h2>
+            <p class="text-slate-600 text-sm">Vui lòng quét mã QR họp và chọn đúng vai trò thành viên để tiến hành thực hiện quyền biểu quyết.</p>
+          </div>
+
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-5xl mx-auto">
+            <div class="bg-white rounded-3xl p-6 shadow-xl border border-slate-200 flex flex-col justify-between">
+              <form id="delegate-login-form" class="space-y-4">
+                <h3 class="font-bold text-lg text-slate-900 border-b pb-2">Dành Cho 12 Đại Biểu</h3>
+                <div>
+                  <label class="text-sm font-semibold text-slate-700 block mb-1">Chọn tên Đại biểu:</label>
+                  <select id="login-delegate-id" class="w-full bg-slate-50 border border-slate-300 rounded-xl px-4 py-3 text-sm font-medium">
+                    <option value="">-- Chọn tên từ danh sách --</option>
+                    ${delegateOptions}
+                  </select>
+                </div>
+                <div>
+                  <label class="text-sm font-semibold text-slate-700 block mb-1">Mã khóa bảo mật (PIN):</label>
+                  <input type="password" id="login-delegate-pin" placeholder="Nhập 4 số PIN" class="w-full bg-slate-50 border border-slate-300 rounded-xl px-4 py-3 text-sm text-center font-mono tracking-widest" maxLength="4">
+                </div>
+                <div id="login-error-container" class="p-3 bg-red-50 text-red-700 text-xs rounded-lg font-medium hidden"></div>
+                <button type="submit" class="w-full bg-red-600 hover:bg-red-700 text-white font-bold py-3 rounded-xl transition text-sm shadow-md">Đăng Nhập Biểu Quyết</button>
+              </form>
+              <div class="mt-6 pt-4 border-t">
+                <button id="toggle-pin-hint-btn" class="text-xs text-blue-600 hover:underline font-semibold">Tra cứu nhanh danh sách mã khóa PIN</button>
+                ${hintHTML}
+              </div>
+            </div>
+
+            <div class="space-y-6">
+              <div class="bg-white rounded-3xl p-6 shadow-xl border border-slate-200 space-y-4">
+                <h3 class="font-bold text-lg text-slate-900 border-b pb-2">Màn Hình Hội Trường / Thư Ký</h3>
+                <p class="text-sm text-slate-600">Dùng trình chiếu kết quả dạng đồ thị tròn lên Tivi hoặc máy chiếu lớn tại trung tâm hội trường xã Thanh Mai.</p>
+                <button id="go-to-board-btn" class="w-full bg-slate-900 hover:bg-slate-800 text-white font-bold py-3 rounded-xl transition text-sm shadow-md">Mở Màn Hình Trình Chiếu</button>
+              </div>
+
+              <div class="bg-white rounded-3xl p-6 shadow-xl border border-slate-200">
+                <form id="admin-login-form" class="space-y-3">
+                  <label class="text-xs font-bold uppercase text-slate-500 block">Khu Vực Bàn Điều Khiển Chủ Tọa (PIN: 9999)</label>
+                  <div class="flex gap-2">
+                    <input type="password" id="admin-pin-input" placeholder="Mã PIN Admin" class="flex-1 bg-slate-50 border border-slate-300 rounded-xl px-4 py-2 text-xs text-center font-mono" maxLength="4">
+                    <button type="submit" class="bg-amber-500 hover:bg-amber-600 text-slate-900 font-bold px-4 rounded-xl text-xs transition">Quản Trị</button>
+                  </div>
+                  <div id="admin-error-container" class="p-2 bg-red-50 text-red-700 text-[11px] rounded hidden"></div>
+                </form>
+              </div>
+            </div>
+          </div>
+        </div>
+      `;
+
+      document.getElementById('toggle-pin-hint-btn').onclick = () => { state.showPinHint = !state.showPinHint; renderPortal(); };
+      document.getElementById('go-to-board-btn').onclick = () => { state.currentView = 'board'; renderApp(); };
+      
+      document.getElementById('delegate-login-form').onsubmit = (e) => {
+        e.preventDefault();
+        const id = document.getElementById('login-delegate-id').value;
+        const pin = document.getElementById('login-delegate-pin').value;
+        if(!id) { const err = document.getElementById('login-error-container'); err.textContent = "⚠️ Vui lòng chọn tên đại biểu."; err.classList.remove('hidden'); return; }
+        const d = DELEGATES.find(item => item.id === id);
+        if (d && d.pin === pin) { state.currentDelegate = d; state.currentView = 'delegate'; renderApp(); } 
+        else { const err = document.getElementById('login-error-container'); err.textContent = "⚠️ Sai mã khóa bảo mật PIN."; err.classList.remove('hidden'); }
+      };
+
+      document.getElementById('admin-login-form').onsubmit = (e) => {
+        e.preventDefault();
+        if (document.getElementById('admin-pin-input').value === ADMIN_PIN) { state.isAdminMode = true; state.currentView = 'board'; renderApp(); } 
+        else { const err = document.getElementById('admin-error-container'); err.textContent = "⚠️ Mã PIN Chủ tọa không đúng."; err.classList.remove('hidden'); }
+      };
+    }
+
+    // Vẽ Bảng kết quả (Board / Admin)
+    function renderBoard() {
+      const container = document.getElementById('active-view-container');
+      const totalVotes = Object.keys(state.votes).length;
+      const countApprove = Object.values(state.votes).filter(v => v === 'approve').length;
+      const countReject = Object.values(state.votes).filter(v => v === 'reject').length;
+      const countAbstain = Object.values(state.votes).filter(v => v === 'abstain').length;
+      const countNotVoted = DELEGATES.length - totalVotes;
+      const getPercent = (c) => DELEGATES.length > 0 ? Math.round((c / DELEGATES.length) * 100) : 0;
+
+      const gridHTML = DELEGATES.map((d) => {
+        const vote = state.votes[d.id];
+        let cardBg = "bg-slate-50 border-slate-200";
+        let badge = `<span class="text-[10px] font-bold px-2 py-0.5 rounded-full bg-slate-200 text-slate-600">Chưa bỏ phiếu</span>`;
+
+        if (vote) {
+          if (state.session.isSecret) {
+            cardBg = "bg-indigo-50 border-indigo-200";
+            badge = `<span class="text-[10px] font-bold px-2 py-0.5 rounded-full bg-indigo-600 text-white">Đã gửi phiếu</span>`;
+          } else {
+            if (vote === 'approve') { cardBg = "bg-emerald-50 border-emerald-300"; badge = `<span class="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-600 text-white">Tán thành</span>`; }
+            else if (vote === 'reject') { cardBg = "bg-red-50 border-red-300"; badge = `<span class="text-[10px] font-bold px-2 py-0.5 rounded-full bg-red-600 text-white">Phản đối</span>`; }
+            else { cardBg = "bg-amber-50 border-amber-300"; badge = `<span class="text-[10px] font-bold px-2 py-0.5 rounded-full bg-amber-500 text-slate-900">Ý kiến khác</span>`; }
+          }
         }
 
-        function initChart() {
-            const ctx = document.getElementById('mainChart').getContext('2d');
-            mainChart = new Chart(ctx, {
-                type: 'bar',
-                data: {
-                    labels: ['Tán thành', 'Không tán thành', 'Ý kiến khác'],
-                    datasets: [{ data: voteData, backgroundColor: ['#10b981', '#f43f5e', '#f59e0b'], borderRadius: 8 }]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    plugins: { legend: { display: false } },
-                    scales: {
-                        x: { grid: { display: false }, ticks: { color: '#94a3b8', font: { size: 14, weight: 'bold' } } },
-                        y: { min: 0, max: 12, ticks: { stepSize: 1, color: '#94a3b8', precision: 0 } }
-                    }
-                }
-            });
-            initSync();
-        }
+        return `<div class="p-4 rounded-2xl border flex flex-col justify-between h-24 shadow-sm ${cardBg}"><div><span class="text-[9px] font-bold text-slate-400 block uppercase">${d.role}</span><h4 class="font-extrabold text-sm">${d.name}</h4></div><div class="flex items-center justify-between pt-1 border-t border-slate-200/50">${badge}<span class="text-[9px] font-mono text-slate-400">${d.id.toUpperCase()}</span></div></div>`;
+      }).join('');
 
-        function updateUI() {
-            const total = voteData.reduce((a, b) => a + b, 0);
-            voteData.forEach((votes, index) => {
-                const pct = total > 0 ? ((votes / total) * 100).toFixed(1) : 0;
-                document.getElementById(`count-${index}`).innerText = votes;
-                document.getElementById(`percent-${index}`).innerText = `${pct}%`;
-            });
-            if (mainChart) {
-                mainChart.data.datasets[0].data = voteData;
-                mainChart.update();
-            }
-        }
+      let adminControlsHTML = '';
+      if (state.isAdminMode) {
+        adminControlsHTML = `
+          <div class="bg-white rounded-3xl p-6 md:p-8 shadow-xl border-2 border-amber-400 space-y-4">
+            <h3 class="font-extrabold text-base text-slate-900 flex items-center gap-2">⚙️ Bảng Điều Khiển Của Chủ Tọa</h3>
+            <div class="space-y-3">
+              <div>
+                <label class="text-xs font-bold text-slate-700 block mb-1">Nội dung biểu quyết (Nghị quyết):</label>
+                <textarea id="admin-resolution-title" class="w-full bg-slate-50 border border-slate-300 rounded-xl px-4 py-2 text-sm font-medium" rows="2">${state.session.resolutionTitle}</textarea>
+              </div>
+              <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div class="bg-slate-50 p-3 rounded-xl border flex items-center justify-between">
+                  <span class="text-xs font-bold">Hình thức bỏ phiếu</span>
+                  <button id="toggle-secret-btn" class="px-3 py-1.5 rounded-lg text-xs font-bold border ${state.session.isSecret ? 'bg-indigo-600 text-white' : 'bg-white text-slate-700'}">${state.session.isSecret ? 'Bỏ Phiếu Mật' : 'Bỏ Phiếu Công Khai'}</button>
+                </div>
+                <div class="bg-slate-50 p-3 rounded-xl border flex items-center justify-between">
+                  <span class="text-xs font-bold">Trạng thái cổng</span>
+                  <button id="toggle-lock-btn" class="px-3 py-1.5 rounded-lg text-xs font-bold border ${state.session.isLocked ? 'bg-slate-900 text-white' : 'bg-emerald-600 text-white'}">${state.session.isLocked ? 'Đã Khóa Cổng' : 'Đang Mở Cổng'}</button>
+                </div>
+              </div>
+              <div class="pt-3 border-t flex flex-wrap gap-2">
+                <button id="reset-votes-btn" class="bg-red-600 hover:bg-red-700 text-white font-bold py-2.5 px-4 rounded-xl text-xs shadow-sm">Xóa Kết Quả Lượt Này</button>
+                <button id="restore-default-btn" class="bg-slate-600 hover:bg-slate-700 text-white font-bold py-2.5 px-4 rounded-xl text-xs shadow-sm flex items-center gap-1">
+                  <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 1121.21 15.11a2.457 2.457 0 010-4.219" /></svg>
+                  <span>Khôi phục mặc định ban đầu</span>
+                </button>
+              </div>
+            </div>
+          </div>
+        `;
+      }
 
-        function resetServer() {
-            if (confirm("Đồng chí có chắc chắn xóa sạch dữ liệu để bắt đầu nội dung biểu quyết mới?")) {
-                db.ref('session_hdnd').set({ votes: [0, 0, 0], votedList: {} });
-            }
-        }
+      container.innerHTML = `
+        <div class="space-y-8 animate-fadeIn">
+          <div class="bg-white rounded-3xl p-6 shadow-xl border border-slate-200">
+            <span class="text-[10px] font-bold uppercase bg-red-100 text-red-700 px-2 py-0.5 rounded">Nội dung lấy ý kiến hiện tại</span>
+            <h2 class="text-xl md:text-2xl font-black text-slate-900 mt-2">${state.session.resolutionTitle}</h2>
+            <div class="mt-3 text-xs text-slate-500 font-semibold">Chế độ: ${state.session.isSecret ? "Bỏ phiếu kín" : "Bỏ phiếu công khai"} | Tiến độ: ${totalVotes}/12 Đại biểu</div>
+          </div>
 
-        window.onload = initChart;
-    </script>
+          <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            <div class="space-y-6">
+              <div class="bg-white rounded-3xl p-6 shadow-xl border border-slate-200 space-y-4">
+                <h3 class="font-bold text-sm uppercase tracking-wide text-slate-400 border-b pb-2">Thống Kê Tỷ Lệ</h3>
+                <div class="space-y-3">
+                  <div>
+                    <div class="flex justify-between text-xs font-bold text-emerald-600"><span>TÁN THÀNH</span><span>${countApprove} ĐB (${getPercent(countApprove)}%)</span></div>
+                    <div class="w-full h-3 bg-slate-100 rounded-full overflow-hidden border mt-1"><div class="h-full bg-emerald-500" style="width: ${getPercent(countApprove)}%"></div></div>
+                  </div>
+                  <div>
+                    <div class="flex justify-between text-xs font-bold text-red-600"><span>KHÔNG TÁN THÀNH</span><span>${countReject} ĐB (${getPercent(countReject)}%)</span></div>
+                    <div class="w-full h-3 bg-slate-100 rounded-full overflow-hidden border mt-1"><div class="h-full bg-red-500" style="width: ${getPercent(countReject)}%"></div></div>
+                  </div>
+                  <div>
+                    <div class="flex justify-between text-xs font-bold text-amber-600"><span>Ý KIẾN KHÁC</span><span>${countAbstain} ĐB (${getPercent(countAbstain)}%)</span></div>
+                    <div class="w-full h-3 bg-slate-100 rounded-full overflow-hidden border mt-1"><div class="h-full bg-amber-500" style="width: ${getPercent(countAbstain)}%"></div></div>
+                  </div>
+                </div>
+              </div>
+
+              <div class="bg-white rounded-3xl p-6 shadow-xl border border-slate-200 text-center flex flex-col items-center">
+                <svg class="w-32 h-32 transform -rotate-90" viewBox="0 0 100 100">
+                  <circle cx="50" cy="50" r="40" fill="transparent" stroke="#f1f5f9" stroke-width="14" />
+                  ${countApprove > 0 ? `<circle cx="50" cy="50" r="40" fill="transparent" stroke="#10b981" stroke-width="14" stroke-dasharray="${2 * Math.PI * 40 * (countApprove/12)} ${2 * Math.PI * 40}" />` : ''}
+                </svg>
+                <span class="text-2xl font-black text-slate-800 mt-2">${getPercent(countApprove)}%</span>
+                <span class="text-[10px] text-slate-400 font-bold uppercase">Tán Thành Tổng Số</span>
+              </div>
+            </div>
+
+            <div class="lg:col-span-2 space-y-6">
+              <div class="bg-white rounded-3xl p-6 shadow-xl border border-slate-200"><div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">${gridHTML}</div></div>
+              ${adminControlsHTML}
+            </div>
+          </div>
+        </div>
+      `;
+
+      if (state.isAdminMode) {
+        document.getElementById('admin-resolution-title').oninput = (e) => handleUpdateSession(e.target.value, state.session.isLocked, state.session.isSecret);
+        document.getElementById('toggle-secret-btn').onclick = () => handleUpdateSession(state.session.resolutionTitle, state.session.isLocked, !state.session.isSecret);
+        document.getElementById('toggle-lock-btn').onclick = () => handleUpdateSession(state.session.resolutionTitle, !state.session.isLocked, state.session.isSecret);
+        document.getElementById('reset-votes-btn').onclick = () => showConfirm("Bạn có chắc muốn XÓA HẾT kết quả bỏ phiếu hiện tại?", () => handleResetVotes());
+        document.getElementById('restore-default-btn').onclick = () => showConfirm("Bạn có chắc chắn muốn KHÔI PHỤC TOÀN BỘ hệ thống về trạng thái mặc định ban đầu?", () => handleRestoreToDefault());
+      }
+    }
+
+    // Vẽ giao diện thiết bị cầm tay Đại biểu (Delegate)
+    function renderDelegate() {
+      const container = document.getElementById('active-view-container');
+      const myVote = state.votes[state.currentDelegate.id];
+      let alertCard = `<div class="p-3 bg-amber-50 text-amber-900 border border-amber-200 text-center rounded-xl font-bold text-xs">Vui lòng chạm vào 1 trong 3 nút lớn bên dưới để gửi kết quả.</div>`;
+
+      if (myVote) {
+        let text = 'Ý KIẾN KHÁC';
+        if (myVote === 'approve') text = 'TÁN THÀNH';
+        if (myVote === 'reject') text = 'KHÔNG TÁN THÀNH';
+        alertCard = `<div class="p-3 bg-indigo-50 text-indigo-900 border border-indigo-200 text-center rounded-xl font-bold text-sm">Hệ thống đã ghi nhận: ${text} ${!state.session.isLocked ? '(Bạn có thể bấm chọn lại để đổi)' : ''}</div>`;
+      }
+
+      container.innerHTML = `
+        <div class="max-w-xl mx-auto space-y-6 animate-fadeIn">
+          <div class="bg-white rounded-3xl p-5 shadow-xl border border-slate-200 text-center">
+            <span class="text-[10px] font-bold text-slate-400 uppercase">Nội dung nghị quyết:</span>
+            <h3 class="font-bold text-base text-slate-900 mt-1">${state.session.resolutionTitle}</h3>
+            <div class="mt-2 text-[10px] font-bold text-slate-500 uppercase">Cổng nhận phiếu: ${state.session.isLocked ? 'ĐÃ KHÓA' : 'ĐANG MỞ'}</div>
+          </div>
+
+          <div class="bg-white rounded-3xl p-6 shadow-xl border border-slate-200 space-y-5">
+            <div class="text-center border-b pb-3">
+              <span class="text-xs text-slate-400">Đại biểu thực hiện</span>
+              <h4 class="font-black text-lg">${state.currentDelegate.name}</h4>
+              <span class="text-xs text-red-600 font-bold">${state.currentDelegate.role}</span>
+            </div>
+
+            ${alertCard}
+
+            <div class="space-y-3">
+              <button id="vote-approve-btn" ${state.session.isLocked ? 'disabled' : ''} class="w-full py-4 rounded-xl border-2 font-bold text-sm text-left px-4 flex justify-between items-center ${myVote === 'approve' ? 'bg-emerald-600 text-white border-emerald-600' : 'bg-white text-emerald-700 border-emerald-200'}"><span>✓ TÁN THÀNH</span>${myVote === 'approve' ? '<span class="text-xs bg-white text-emerald-700 px-2 py-0.5 rounded-full font-bold">Đã chọn</span>':''}</button>
+              <button id="vote-reject-btn" ${state.session.isLocked ? 'disabled' : ''} class="w-full py-4 rounded-xl border-2 font-bold text-sm text-left px-4 flex justify-between items-center ${myVote === 'reject' ? 'bg-red-600 text-white border-red-600' : 'bg-white text-red-700 border-red-200'}"><span>✕ KHÔNG TÁN THÀNH</span>${myVote === 'reject' ? '<span class="text-xs bg-white text-red-700 px-2 py-0.5 rounded-full font-bold">Đã chọn</span>':''}</button>
+              <button id="vote-abstain-btn" ${state.session.isLocked ? 'disabled' : ''} class="w-full py-4 rounded-xl border-2 font-bold text-sm text-left px-4 flex justify-between items-center ${myVote === 'abstain' ? 'bg-amber-500 text-slate-950 border-amber-500' : 'bg-white text-amber-700 border-amber-200'}"><span>? Ý KIẾN KHÁC / TRẮNG</span>${myVote === 'abstain' ? '<span class="text-xs bg-slate-900 text-amber-400 px-2 py-0.5 rounded-full font-bold">Đã chọn</span>':''}</button>
+            </div>
+          </div>
+        </div>
+      `;
+
+      if (!state.session.isLocked) {
+        document.getElementById('vote-approve-btn').onclick = () => handleVote('approve');
+        document.getElementById('vote-reject-btn').onclick = () => handleVote('reject');
+        document.getElementById('vote-abstain-btn').onclick = () => handleVote('abstain');
+      }
+    }
+
+    function renderApp() {
+      renderHeader();
+      if(state.currentView === 'board') renderBoard();
+      else if(state.currentView === 'delegate') renderDelegate();
+      else renderPortal();
+    }
+
+    window.onload = function() { initFirebaseAndSync(); };
+  </script>
 </body>
 </html>
